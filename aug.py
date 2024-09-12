@@ -42,29 +42,65 @@ class DataAugmenter():
             if folder not in self.aug_folders:
                 os.mkdir(os.path.join(self.aug_path, folder))
     
+    # 크기 224, 224로 줄이기
     def resize_image(self):
         for c in self.org_folders:
             data_path = os.path.join(self.org_path, c)
             print(data_path)
+            
+            # aug 폴더에 resize 폴더 있는지 확인하고 없으면 생성 있으면, 파일 모두 삭제
             if 'resize' not in os.listdir(os.path.join(self.aug_path, c)):
                 os.mkdir(os.path.join(self.aug_path, c, 'resize'))
+            else:
+                for r in os.listdir(os.path.join(self.aug_path, c, 'resize')):
+                    os.remove(os.path.join(self.aug_path, c, 'resize', r))
+                    
             for f in os.listdir(data_path):
+                split_name = os.path.splitext(f)
+                
                 img = cv2.imread(os.path.join(data_path, f), cv2.IMREAD_COLOR)
                 dst = cv2.resize(img, (224, 224), interpolation=cv2.INTER_AREA)
-                print(os.path.join(self.aug_path, c, 'resize', f))
-                cv2.imwrite(os.path.join(self.aug_path, c, 'resize', f), dst)
-                
-                
-    def rotate_image(self):
-        for c in self.org_folders:
-            # data_path = os.path.join(self.org_path, c)
+                name = os.path.join(self.aug_path, c, 'resize', split_name[0] + '_resize' + split_name[1])
+                print(name)
+                cv2.imwrite(name, dst)
+    
+    # 좌우반전
+    def flip_image(self):
+        for c in self.aug_folders:
             data_path = os.path.join(self.aug_path, c, 'resize')
             print(data_path)
+            
+            # aug 폴더에 flip 폴더 있는지 확인하고 없으면 생성 있으면, 파일 모두 삭제
+            if 'flip' not in os.listdir(os.path.join(self.aug_path, c)):
+                os.mkdir(os.path.join(self.aug_path, c, 'flip'))
+            else:
+                for r in os.listdir(os.path.join(self.aug_path, c, 'flip')):
+                    os.remove(os.path.join(self.aug_path, c, 'flip', r))
+                    
+            for f in os.listdir(data_path):
+                split_name = os.path.splitext(f)
+                
+                img = cv2.imread(os.path.join(data_path, f), cv2.IMREAD_COLOR) # 원본
+                name = os.path.join(self.aug_path, c, 'flip', split_name[0] + split_name[1])
+                cv2.imwrite(name, img)
+                
+                dst = cv2.flip(img, 1) # 좌우 반전
+                name = os.path.join(self.aug_path, c, 'flip', split_name[0] + '_flip' + split_name[1])
+                cv2.imwrite(name, dst)
+    
+    # 360도로 총 8개 이미지 생성
+    def rotate_image(self):
+        for c in self.org_folders:
+            data_path = os.path.join(self.aug_path, c, 'rotate')
+            print(data_path)
+            
+            # aug 폴더에 rotate 폴더 있는지 확인하고 없으면 생성 있으면, 파일 모두 삭제
             if 'rotate' not in os.listdir(os.path.join(self.aug_path, c)):
                 os.mkdir(os.path.join(self.aug_path, c, 'rotate'))
-            # else:
-            #     for r in os.listdir(os.path.join(self.aug_path, c, 'rotate')):
-            #         os.remove(os.path.join(self.aug_path, c, 'rotate', r))
+            else:
+                for r in os.listdir(os.path.join(self.aug_path, c, 'rotate')):
+                    os.remove(os.path.join(self.aug_path, c, 'rotate', r))
+                    
             for f in os.listdir(data_path):
                 img = cv2.imread(os.path.join(data_path, f), cv2.IMREAD_COLOR)
                 
@@ -77,11 +113,11 @@ class DataAugmenter():
                     dst = cv2.warpAffine(img, M, (w, h))
                     name = os.path.join(self.aug_path, c, 'rotate', split_name[0] + '_' + str(45 * r_cnt) + split_name[1])
                     cv2.imwrite(name, dst)
-                    
-
+    
 if __name__ == '__main__':
     aug = DataAugmenter('floor5')
     
     aug.make_aug_folder()
     aug.resize_image()
+    aug.flip_image()
     aug.rotate_image()
